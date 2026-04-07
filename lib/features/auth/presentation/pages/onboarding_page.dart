@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../../../theme/tokens/components.dart';
@@ -5,6 +7,7 @@ import '../../../../theme/tokens/semantic.dart';
 import '../../../../theme/tokens/spacing.dart';
 import '../../../../theme/tokens/typography.dart';
 import '../components/onboarding_page_content.dart';
+import '../components/onboarding_progress_indicator.dart';
 
 class OnboardingPage extends StatefulWidget {
   const OnboardingPage({super.key});
@@ -16,38 +19,60 @@ class OnboardingPage extends StatefulWidget {
 class _OnboardingPageState extends State<OnboardingPage> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
+  Timer? _autoAdvanceTimer;
+  bool _isAutoAdvancing = false;
 
   static const List<OnboardingPageData> _pages = [
     OnboardingPageData(
       title: 'Find your favorite\npodcasts',
       subtitle: 'From creators and thought leaders you care about.',
       illustrationAsset: 'assets/images/onboarding_podcasts.png',
-      activeIndex: 0,
     ),
     OnboardingPageData(
       title: 'Capture key\nmoments',
       subtitle:
           'Tap once to Save powerful ideas, quotes, and insights in seconds.',
       illustrationAsset: 'assets/images/onboarding_capture.png',
-      activeIndex: 1,
     ),
     OnboardingPageData(
       title: 'Revisit and retain\nwhat you hear',
       subtitle: 'Turn passive listening into active learning.',
       illustrationAsset: 'assets/images/onboarding_retain.png',
-      activeIndex: 2,
     ),
     OnboardingPageData(
       title: 'Share insights,\nnot just episodes',
       subtitle:
           'Easily share meaningful moments with friends and colleagues.',
       illustrationAsset: 'assets/images/onboarding_share.png',
-      activeIndex: 3,
     ),
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _startAutoAdvance();
+  }
+
+  void _startAutoAdvance() {
+    _autoAdvanceTimer = Timer.periodic(
+      const Duration(milliseconds: 3000),
+      (_) {
+        if (_currentPage < _pages.length - 1) {
+          _isAutoAdvancing = true;
+          _pageController.nextPage(
+            duration: const Duration(milliseconds: 400),
+            curve: Curves.easeInOut,
+          );
+        } else {
+          _autoAdvanceTimer?.cancel();
+        }
+      },
+    );
+  }
+
+  @override
   void dispose() {
+    _autoAdvanceTimer?.cancel();
     _pageController.dispose();
     super.dispose();
   }
@@ -59,18 +84,56 @@ class _OnboardingPageState extends State<OnboardingPage> {
       body: SafeArea(
         child: Column(
           children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.xl,
+                AppSpacing.xxl,
+                AppSpacing.xl,
+                0,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  OnboardingProgressIndicator(
+                    totalSteps: _pages.length,
+                    activeStep: _currentPage,
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  Row(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(2),
+                        child: Image.asset(
+                          'assets/images/clipcast_icon.png',
+                          width: AppSpacing.lg,
+                          height: AppSpacing.lg,
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                      Text(
+                        'Welcome to ClipCast',
+                        style: AppTypography.bodyMedium.copyWith(
+                          color: SemanticColors.textPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
             Expanded(
               child: PageView.builder(
                 controller: _pageController,
                 itemCount: _pages.length,
                 onPageChanged: (index) {
+                  if (!_isAutoAdvancing) {
+                    _autoAdvanceTimer?.cancel();
+                  }
+                  _isAutoAdvancing = false;
                   setState(() => _currentPage = index);
                 },
                 itemBuilder: (context, index) {
-                  return OnboardingPageContent(
-                    data: _pages[index],
-                    currentPage: _currentPage,
-                  );
+                  return OnboardingPageContent(data: _pages[index]);
                 },
               ),
             ),
