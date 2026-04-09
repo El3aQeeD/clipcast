@@ -1,0 +1,351 @@
+import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const FN = "seed-onboarding-data";
+
+function log(
+  level: "info" | "warn" | "error",
+  msg: string,
+  extra: Record<string, unknown> = {},
+) {
+  console.log(
+    JSON.stringify({
+      ts: new Date().toISOString(),
+      fn: FN,
+      level,
+      msg,
+      ...extra,
+    }),
+  );
+}
+
+const GENRE_MAP: Record<string, { name: string; parent?: string }> = {
+  PODCASTSERIES_ARTS: { name: "Arts" },
+  PODCASTSERIES_ARTS_BOOKS: { name: "Books", parent: "PODCASTSERIES_ARTS" },
+  PODCASTSERIES_ARTS_DESIGN: { name: "Design", parent: "PODCASTSERIES_ARTS" },
+  PODCASTSERIES_ARTS_FASHION_AND_BEAUTY: { name: "Fashion & Beauty", parent: "PODCASTSERIES_ARTS" },
+  PODCASTSERIES_ARTS_FOOD: { name: "Food", parent: "PODCASTSERIES_ARTS" },
+  PODCASTSERIES_ARTS_PERFORMING_ARTS: { name: "Performing Arts", parent: "PODCASTSERIES_ARTS" },
+  PODCASTSERIES_ARTS_VISUAL_ARTS: { name: "Visual Arts", parent: "PODCASTSERIES_ARTS" },
+  PODCASTSERIES_BUSINESS: { name: "Business" },
+  PODCASTSERIES_BUSINESS_CAREERS: { name: "Careers", parent: "PODCASTSERIES_BUSINESS" },
+  PODCASTSERIES_BUSINESS_ENTREPRENEURSHIP: { name: "Entrepreneurship", parent: "PODCASTSERIES_BUSINESS" },
+  PODCASTSERIES_BUSINESS_INVESTING: { name: "Investing", parent: "PODCASTSERIES_BUSINESS" },
+  PODCASTSERIES_BUSINESS_MANAGEMENT: { name: "Management", parent: "PODCASTSERIES_BUSINESS" },
+  PODCASTSERIES_BUSINESS_MARKETING: { name: "Marketing", parent: "PODCASTSERIES_BUSINESS" },
+  PODCASTSERIES_BUSINESS_NON_PROFIT: { name: "Non-Profit", parent: "PODCASTSERIES_BUSINESS" },
+  PODCASTSERIES_COMEDY: { name: "Comedy" },
+  PODCASTSERIES_COMEDY_IMPROV: { name: "Improv", parent: "PODCASTSERIES_COMEDY" },
+  PODCASTSERIES_COMEDY_INTERVIEWS: { name: "Comedy Interviews", parent: "PODCASTSERIES_COMEDY" },
+  PODCASTSERIES_COMEDY_STANDUP: { name: "Stand-Up", parent: "PODCASTSERIES_COMEDY" },
+  PODCASTSERIES_EDUCATION: { name: "Education" },
+  PODCASTSERIES_EDUCATION_COURSES: { name: "Courses", parent: "PODCASTSERIES_EDUCATION" },
+  PODCASTSERIES_EDUCATION_HOW_TO: { name: "How To", parent: "PODCASTSERIES_EDUCATION" },
+  PODCASTSERIES_EDUCATION_LANGUAGE_LEARNING: { name: "Language Learning", parent: "PODCASTSERIES_EDUCATION" },
+  PODCASTSERIES_EDUCATION_SELF_IMPROVEMENT: { name: "Self-Improvement", parent: "PODCASTSERIES_EDUCATION" },
+  PODCASTSERIES_FICTION: { name: "Fiction" },
+  PODCASTSERIES_FICTION_COMEDY_FICTION: { name: "Comedy Fiction", parent: "PODCASTSERIES_FICTION" },
+  PODCASTSERIES_FICTION_DRAMA: { name: "Drama", parent: "PODCASTSERIES_FICTION" },
+  PODCASTSERIES_FICTION_SCIENCE_FICTION: { name: "Science Fiction", parent: "PODCASTSERIES_FICTION" },
+  PODCASTSERIES_GOVERNMENT: { name: "Government" },
+  PODCASTSERIES_HEALTH_AND_FITNESS: { name: "Health & Fitness" },
+  PODCASTSERIES_HEALTH_AND_FITNESS_ALTERNATIVE_HEALTH: { name: "Alternative Health", parent: "PODCASTSERIES_HEALTH_AND_FITNESS" },
+  PODCASTSERIES_HEALTH_AND_FITNESS_FITNESS: { name: "Fitness", parent: "PODCASTSERIES_HEALTH_AND_FITNESS" },
+  PODCASTSERIES_HEALTH_AND_FITNESS_MEDICINE: { name: "Medicine", parent: "PODCASTSERIES_HEALTH_AND_FITNESS" },
+  PODCASTSERIES_HEALTH_AND_FITNESS_MENTAL_HEALTH: { name: "Mental Health", parent: "PODCASTSERIES_HEALTH_AND_FITNESS" },
+  PODCASTSERIES_HEALTH_AND_FITNESS_NUTRITION: { name: "Nutrition", parent: "PODCASTSERIES_HEALTH_AND_FITNESS" },
+  PODCASTSERIES_HEALTH_AND_FITNESS_SEXUALITY: { name: "Sexuality", parent: "PODCASTSERIES_HEALTH_AND_FITNESS" },
+  PODCASTSERIES_HISTORY: { name: "History" },
+  PODCASTSERIES_KIDS_AND_FAMILY: { name: "Kids & Family" },
+  PODCASTSERIES_KIDS_AND_FAMILY_EDUCATION_FOR_KIDS: { name: "Education for Kids", parent: "PODCASTSERIES_KIDS_AND_FAMILY" },
+  PODCASTSERIES_KIDS_AND_FAMILY_PARENTING: { name: "Parenting", parent: "PODCASTSERIES_KIDS_AND_FAMILY" },
+  PODCASTSERIES_KIDS_AND_FAMILY_PETS_AND_ANIMALS: { name: "Pets & Animals", parent: "PODCASTSERIES_KIDS_AND_FAMILY" },
+  PODCASTSERIES_KIDS_AND_FAMILY_STORIES_FOR_KIDS: { name: "Stories for Kids", parent: "PODCASTSERIES_KIDS_AND_FAMILY" },
+  PODCASTSERIES_LEISURE: { name: "Leisure" },
+  PODCASTSERIES_LEISURE_ANIMATION_AND_MANGA: { name: "Animation & Manga", parent: "PODCASTSERIES_LEISURE" },
+  PODCASTSERIES_LEISURE_AUTOMOTIVE: { name: "Automotive", parent: "PODCASTSERIES_LEISURE" },
+  PODCASTSERIES_LEISURE_AVIATION: { name: "Aviation", parent: "PODCASTSERIES_LEISURE" },
+  PODCASTSERIES_LEISURE_CRAFTS: { name: "Crafts", parent: "PODCASTSERIES_LEISURE" },
+  PODCASTSERIES_LEISURE_GAMES: { name: "Games", parent: "PODCASTSERIES_LEISURE" },
+  PODCASTSERIES_LEISURE_HOBBIES: { name: "Hobbies", parent: "PODCASTSERIES_LEISURE" },
+  PODCASTSERIES_LEISURE_HOME_AND_GARDEN: { name: "Home & Garden", parent: "PODCASTSERIES_LEISURE" },
+  PODCASTSERIES_LEISURE_VIDEO_GAMES: { name: "Video Games", parent: "PODCASTSERIES_LEISURE" },
+  PODCASTSERIES_MUSIC: { name: "Music" },
+  PODCASTSERIES_MUSIC_COMMENTARY: { name: "Music Commentary", parent: "PODCASTSERIES_MUSIC" },
+  PODCASTSERIES_MUSIC_HISTORY: { name: "Music History", parent: "PODCASTSERIES_MUSIC" },
+  PODCASTSERIES_MUSIC_INTERVIEWS: { name: "Music Interviews", parent: "PODCASTSERIES_MUSIC" },
+  PODCASTSERIES_NEWS: { name: "News" },
+  PODCASTSERIES_NEWS_BUSINESS: { name: "Business News", parent: "PODCASTSERIES_NEWS" },
+  PODCASTSERIES_NEWS_COMMENTARY: { name: "Commentary", parent: "PODCASTSERIES_NEWS" },
+  PODCASTSERIES_NEWS_DAILY_NEWS: { name: "Daily News", parent: "PODCASTSERIES_NEWS" },
+  PODCASTSERIES_NEWS_ENTERTAINMENT: { name: "Entertainment News", parent: "PODCASTSERIES_NEWS" },
+  PODCASTSERIES_NEWS_POLITICS: { name: "Politics", parent: "PODCASTSERIES_NEWS" },
+  PODCASTSERIES_NEWS_SPORTS: { name: "Sports News", parent: "PODCASTSERIES_NEWS" },
+  PODCASTSERIES_NEWS_TECH: { name: "Tech News", parent: "PODCASTSERIES_NEWS" },
+  PODCASTSERIES_RELIGION_AND_SPIRITUALITY: { name: "Religion & Spirituality" },
+  PODCASTSERIES_RELIGION_AND_SPIRITUALITY_BUDDHISM: { name: "Buddhism", parent: "PODCASTSERIES_RELIGION_AND_SPIRITUALITY" },
+  PODCASTSERIES_RELIGION_AND_SPIRITUALITY_CHRISTIANITY: { name: "Christianity", parent: "PODCASTSERIES_RELIGION_AND_SPIRITUALITY" },
+  PODCASTSERIES_RELIGION_AND_SPIRITUALITY_HINDUISM: { name: "Hinduism", parent: "PODCASTSERIES_RELIGION_AND_SPIRITUALITY" },
+  PODCASTSERIES_RELIGION_AND_SPIRITUALITY_ISLAM: { name: "Islam", parent: "PODCASTSERIES_RELIGION_AND_SPIRITUALITY" },
+  PODCASTSERIES_RELIGION_AND_SPIRITUALITY_JUDAISM: { name: "Judaism", parent: "PODCASTSERIES_RELIGION_AND_SPIRITUALITY" },
+  PODCASTSERIES_RELIGION_AND_SPIRITUALITY_RELIGION: { name: "Religion", parent: "PODCASTSERIES_RELIGION_AND_SPIRITUALITY" },
+  PODCASTSERIES_RELIGION_AND_SPIRITUALITY_SPIRITUALITY: { name: "Spirituality", parent: "PODCASTSERIES_RELIGION_AND_SPIRITUALITY" },
+  PODCASTSERIES_SCIENCE: { name: "Science" },
+  PODCASTSERIES_SCIENCE_ASTRONOMY: { name: "Astronomy", parent: "PODCASTSERIES_SCIENCE" },
+  PODCASTSERIES_SCIENCE_CHEMISTRY: { name: "Chemistry", parent: "PODCASTSERIES_SCIENCE" },
+  PODCASTSERIES_SCIENCE_EARTH_SCIENCES: { name: "Earth Sciences", parent: "PODCASTSERIES_SCIENCE" },
+  PODCASTSERIES_SCIENCE_LIFE_SCIENCES: { name: "Life Sciences", parent: "PODCASTSERIES_SCIENCE" },
+  PODCASTSERIES_SCIENCE_MATHEMATICS: { name: "Mathematics", parent: "PODCASTSERIES_SCIENCE" },
+  PODCASTSERIES_SCIENCE_NATURAL_SCIENCES: { name: "Natural Sciences", parent: "PODCASTSERIES_SCIENCE" },
+  PODCASTSERIES_SCIENCE_NATURE: { name: "Nature", parent: "PODCASTSERIES_SCIENCE" },
+  PODCASTSERIES_SCIENCE_PHYSICS: { name: "Physics", parent: "PODCASTSERIES_SCIENCE" },
+  PODCASTSERIES_SOCIETY_AND_CULTURE: { name: "Society & Culture" },
+  PODCASTSERIES_SOCIETY_AND_CULTURE_DOCUMENTARY: { name: "Documentary", parent: "PODCASTSERIES_SOCIETY_AND_CULTURE" },
+  PODCASTSERIES_SOCIETY_AND_CULTURE_PERSONAL_JOURNALS: { name: "Personal Journals", parent: "PODCASTSERIES_SOCIETY_AND_CULTURE" },
+  PODCASTSERIES_SOCIETY_AND_CULTURE_PHILOSOPHY: { name: "Philosophy", parent: "PODCASTSERIES_SOCIETY_AND_CULTURE" },
+  PODCASTSERIES_SOCIETY_AND_CULTURE_PLACES_AND_TRAVEL: { name: "Places & Travel", parent: "PODCASTSERIES_SOCIETY_AND_CULTURE" },
+  PODCASTSERIES_SOCIETY_AND_CULTURE_RELATIONSHIPS: { name: "Relationships", parent: "PODCASTSERIES_SOCIETY_AND_CULTURE" },
+  PODCASTSERIES_SPORTS: { name: "Sports" },
+  PODCASTSERIES_SPORTS_BASEBALL: { name: "Baseball", parent: "PODCASTSERIES_SPORTS" },
+  PODCASTSERIES_SPORTS_BASKETBALL: { name: "Basketball", parent: "PODCASTSERIES_SPORTS" },
+  PODCASTSERIES_SPORTS_CRICKET: { name: "Cricket", parent: "PODCASTSERIES_SPORTS" },
+  PODCASTSERIES_SPORTS_FANTASY_SPORTS: { name: "Fantasy Sports", parent: "PODCASTSERIES_SPORTS" },
+  PODCASTSERIES_SPORTS_FOOTBALL: { name: "Football", parent: "PODCASTSERIES_SPORTS" },
+  PODCASTSERIES_SPORTS_GOLF: { name: "Golf", parent: "PODCASTSERIES_SPORTS" },
+  PODCASTSERIES_SPORTS_HOCKEY: { name: "Hockey", parent: "PODCASTSERIES_SPORTS" },
+  PODCASTSERIES_SPORTS_RUGBY: { name: "Rugby", parent: "PODCASTSERIES_SPORTS" },
+  PODCASTSERIES_SPORTS_RUNNING: { name: "Running", parent: "PODCASTSERIES_SPORTS" },
+  PODCASTSERIES_SPORTS_SOCCER: { name: "Soccer", parent: "PODCASTSERIES_SPORTS" },
+  PODCASTSERIES_SPORTS_SWIMMING: { name: "Swimming", parent: "PODCASTSERIES_SPORTS" },
+  PODCASTSERIES_SPORTS_TENNIS: { name: "Tennis", parent: "PODCASTSERIES_SPORTS" },
+  PODCASTSERIES_SPORTS_VOLLEYBALL: { name: "Volleyball", parent: "PODCASTSERIES_SPORTS" },
+  PODCASTSERIES_SPORTS_WILDERNESS: { name: "Wilderness", parent: "PODCASTSERIES_SPORTS" },
+  PODCASTSERIES_SPORTS_WRESTLING: { name: "Wrestling", parent: "PODCASTSERIES_SPORTS" },
+  PODCASTSERIES_TECHNOLOGY: { name: "Technology" },
+  PODCASTSERIES_TRUE_CRIME: { name: "True Crime" },
+  PODCASTSERIES_TV_AND_FILM: { name: "TV & Film" },
+  PODCASTSERIES_TV_AND_FILM_AFTER_SHOWS: { name: "After Shows", parent: "PODCASTSERIES_TV_AND_FILM" },
+  PODCASTSERIES_TV_AND_FILM_FILM_HISTORY: { name: "Film History", parent: "PODCASTSERIES_TV_AND_FILM" },
+  PODCASTSERIES_TV_AND_FILM_FILM_INTERVIEWS: { name: "Film Interviews", parent: "PODCASTSERIES_TV_AND_FILM" },
+  PODCASTSERIES_TV_AND_FILM_FILM_REVIEWS: { name: "Film Reviews", parent: "PODCASTSERIES_TV_AND_FILM" },
+  PODCASTSERIES_TV_AND_FILM_TV_REVIEWS: { name: "TV Reviews", parent: "PODCASTSERIES_TV_AND_FILM" },
+};
+
+
+const TADDY_ENDPOINT = "https://api.taddy.org";
+
+async function fetchTaddySpeakers(taddyUserId: string, taddyApiKey: string): Promise<Array<{ name: string; photoUrl: string; externalPodcastIds: string[] }>> {
+  const query = `{
+    getPopularContent(filterByLanguage: ENGLISH, page: 1, limitPerPage: 25) {
+      podcastSeries {
+        uuid
+        name
+        authorName
+        imageUrl
+        itunesInfo { baseArtworkUrlOf(size: 640) }
+      }
+    }
+  }`;
+
+  const speakers = new Map<string, { name: string; photoUrl: string; externalPodcastIds: string[] }>();
+
+  for (let page = 1; page <= 8; page++) {
+    const pageQuery = query.replace("page: 1", `page: ${page}`);
+    try {
+      const res = await fetch(TADDY_ENDPOINT, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-USER-ID": taddyUserId,
+          "X-API-KEY": taddyApiKey,
+        },
+        body: JSON.stringify({ query: pageQuery }),
+      });
+
+      const json = await res.json();
+      const series = json?.data?.getPopularContent?.podcastSeries ?? [];
+
+      for (const podcast of series) {
+        const authorName = podcast.authorName?.trim();
+        if (!authorName) continue;
+
+        const existing = speakers.get(authorName);
+        const photoUrl = podcast.itunesInfo?.baseArtworkUrlOf ?? podcast.imageUrl ?? "";
+
+        if (existing) {
+          existing.externalPodcastIds.push(podcast.uuid);
+        } else {
+          speakers.set(authorName, {
+            name: authorName,
+            photoUrl,
+            externalPodcastIds: [podcast.uuid],
+          });
+        }
+      }
+    } catch (err) {
+      log("error", "taddy_page_fetch_failed", {
+        page,
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
+  }
+
+  return Array.from(speakers.values());
+}
+
+serve(async (req) => {
+  const requestId = crypto.randomUUID();
+  log("info", "request_received", { requestId, method: req.method });
+
+  try {
+    const seedSecret = Deno.env.get("SEED_FUNCTION_SECRET") ?? "";
+    if (seedSecret) {
+      const header = req.headers.get("x-clipcast-seed");
+      if (header !== seedSecret) {
+        log("warn", "forbidden_bad_seed_secret", { requestId });
+        return new Response(JSON.stringify({ error: "Forbidden" }), {
+          status: 403,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+    } else {
+      log("warn", "seed_secret_not_set_invocation_unauthenticated", {
+        requestId,
+      });
+    }
+
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const taddyUserId = Deno.env.get("TADDY_USER_ID") ?? "";
+    const taddyApiKey = Deno.env.get("TADDY_API_KEY") ?? "";
+
+    log("info", "env_loaded", {
+      requestId,
+      hasTaddyUser: Boolean(taddyUserId),
+      hasTaddyKey: Boolean(taddyApiKey),
+    });
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // ── Seed categories ─────────────────────────────────────────
+    const topLevelGenres = Object.entries(GENRE_MAP).filter(([_, v]) => !v.parent);
+    const subGenres = Object.entries(GENRE_MAP).filter(([_, v]) => !!v.parent);
+
+    // Insert top-level first
+    const topLevelRows = topLevelGenres.map(([genre, info], i) => ({
+      name: info.name,
+      taddy_genre: genre,
+      parent_id: null,
+      display_order: i,
+    }));
+
+    const { error: topErr } = await supabase
+      .from("podcast_categories")
+      .upsert(topLevelRows, { onConflict: "taddy_genre" });
+
+    if (topErr) {
+      log("error", "top_level_categories_upsert_failed", {
+        requestId,
+        error: topErr.message,
+      });
+    } else {
+      log("info", "top_level_categories_upsert_ok", {
+        requestId,
+        count: topLevelRows.length,
+      });
+    }
+
+    // Fetch top-level IDs for parent references
+    const { data: topLevelData } = await supabase
+      .from("podcast_categories")
+      .select("id, taddy_genre")
+      .is("parent_id", null);
+
+    const parentMap = new Map<string, string>();
+    for (const row of topLevelData ?? []) {
+      parentMap.set(row.taddy_genre, row.id);
+    }
+
+    // Insert sub-genres with parent references
+    const subRows = subGenres.map(([genre, info], i) => ({
+      name: info.name,
+      taddy_genre: genre,
+      parent_id: parentMap.get(info.parent!) ?? null,
+      display_order: topLevelGenres.length + i,
+    }));
+
+    if (subRows.length > 0) {
+      const { error: subErr } = await supabase
+        .from("podcast_categories")
+        .upsert(subRows, { onConflict: "taddy_genre" });
+
+      if (subErr) {
+        log("error", "subgenre_categories_upsert_failed", {
+          requestId,
+          error: subErr.message,
+        });
+      } else {
+        log("info", "subgenre_categories_upsert_ok", {
+          requestId,
+          count: subRows.length,
+        });
+      }
+    }
+
+    // ── Seed speakers ───────────────────────────────────────────
+    let speakerCount = 0;
+    if (taddyUserId && taddyApiKey) {
+      const speakers = await fetchTaddySpeakers(taddyUserId, taddyApiKey);
+      const speakerRows = speakers.map((s, i) => ({
+        name: s.name,
+        photo_url: s.photoUrl,
+        external_podcast_ids: s.externalPodcastIds,
+        display_order: i,
+      }));
+
+      if (speakerRows.length > 0) {
+        const { error: spkErr } = await supabase
+          .from("podcast_speakers")
+          .upsert(speakerRows, { onConflict: "name" });
+
+        if (spkErr) {
+          log("error", "speakers_upsert_failed", {
+            requestId,
+            error: spkErr.message,
+          });
+        } else {
+          log("info", "speakers_upsert_ok", {
+            requestId,
+            count: speakerRows.length,
+          });
+        }
+        speakerCount = speakerRows.length;
+      }
+    } else {
+      log("warn", "taddy_credentials_missing_skip_speakers", { requestId });
+    }
+
+    const payload = {
+      success: true,
+      request_id: requestId,
+      categories_count: topLevelRows.length + subRows.length,
+      speakers_count: speakerCount,
+    };
+    log("info", "request_complete", payload);
+
+    return new Response(
+      JSON.stringify(payload),
+      { headers: { "Content-Type": "application/json" }, status: 200 },
+    );
+  } catch (err) {
+    log("error", "unhandled_error", {
+      requestId,
+      error: err instanceof Error ? err.message : String(err),
+      stack: err instanceof Error ? err.stack : undefined,
+    });
+    return new Response(
+      JSON.stringify({ error: String(err), request_id: requestId }),
+      { headers: { "Content-Type": "application/json" }, status: 500 },
+    );
+  }
+});

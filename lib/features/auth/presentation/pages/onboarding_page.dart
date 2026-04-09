@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../theme/tokens/components.dart';
 import '../../../../theme/tokens/semantic.dart';
@@ -150,7 +151,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: () {
-                        // TODO: Navigate to create account
+                        context.push('/sign-up-method', extra: false);
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: ComponentColors.buttonPrimaryBg,
@@ -174,7 +175,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                     width: double.infinity,
                     child: OutlinedButton(
                       onPressed: () {
-                        // TODO: Navigate to login
+                        context.push('/sign-up-method', extra: true);
                       },
                       style: OutlinedButton.styleFrom(
                         backgroundColor: ComponentColors.buttonSecondaryBg,

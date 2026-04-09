@@ -1,1 +1,15 @@
-// Sign in use case — to be implemented.
+import '../entities/user_entity.dart';
+import '../repository/auth_repository.dart';
+
+class SignInUseCase {
+  final AuthRepository _repository;
+
+  const SignInUseCase(this._repository);
+
+  Future<UserEntity> call({
+    required String email,
+    required String password,
+  }) {
+    return _repository.signInWithEmail(email: email, password: password);
+  }
+}

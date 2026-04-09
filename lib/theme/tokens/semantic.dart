@@ -23,6 +23,7 @@ abstract final class SemanticColors {
   static const Color textSecondary = PrimitiveColors.neutral400;
   static const Color textTertiary  = PrimitiveColors.neutral200;
   static const Color textDisabled  = PrimitiveColors.neutral500;
+  static const Color textHint       = PrimitiveColors.neutral450;
   static const Color textOnPrimary = PrimitiveColors.neutral950;
 
   // ── Interactive ───────────────────────────────────────────────
@@ -33,6 +34,7 @@ abstract final class SemanticColors {
   // ── Borders ───────────────────────────────────────────────────
   static const Color borderDefault = PrimitiveColors.neutral700;
   static const Color borderSubtle  = PrimitiveColors.neutral600;
+  static const Color borderFaint   = PrimitiveColors.white05;
   static const Color borderStrong  = PrimitiveColors.neutral500;
 
   // ── Tags / Badges ─────────────────────────────────────────────
@@ -50,4 +52,21 @@ abstract final class SemanticColors {
   static const Color feedbackSuccess = PrimitiveColors.green500;
   static const Color feedbackError   = PrimitiveColors.red500;
   static const Color feedbackWarning = PrimitiveColors.amber500;
+
+  // ── Disabled / Muted ─────────────────────────────────────────
+  static const Color interactiveDisabled = PrimitiveColors.darkTeal;
+  static const Color textOnDisabled      = PrimitiveColors.white20;
+
+  // ── Validation ───────────────────────────────────────────────
+  /// Green checkmark on valid email / name fields (#278871).
+  static const Color validCheckmark      = PrimitiveColors.green800;
+  /// Cyan icon for met password criteria (#0BC9E9).
+  static const Color criteriaMet         = PrimitiveColors.cyan400;
+  /// Muted label for password criteria text (#9CA3AF).
+  static const Color criteriaMuted       = PrimitiveColors.neutral400;
+
+  // ── Input (light bg variant) ─────────────────────────────────
+  static const Color inputLightBg        = PrimitiveColors.white100;
+  static const Color inputLightText      = PrimitiveColors.darkText;
+  static const Color inputLightPlaceholder = PrimitiveColors.darkTextMuted;
 }

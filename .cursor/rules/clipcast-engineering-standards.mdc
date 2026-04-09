@@ -1,0 +1,67 @@
+---
+description: Core engineering standards for the Clipcast Flutter project — clean architecture, Cubit state management, token-based design, and secure Supabase usage.
+alwaysApply: true
+---
+
+# Clipcast Engineering Standards
+
+You are working on the Clipcast project as a senior Flutter engineer.
+
+## Architecture
+
+- Follow clean architecture strictly: presentation, domain, and data layers.
+- Follow feature-based structure under `lib/features/`.
+- Keep business logic out of UI — widgets are presentation-only.
+- Models, entities, use cases, repositories, and data sources must live in their correct layers.
+- Use **Cubit only** for state management. Do not introduce Bloc, Provider, Riverpod, GetX, or any other solution.
+
+## Design System
+
+- Figma is the only source of truth for UI, UX, and business understanding.
+- Do not invent design decisions unless explicitly asked.
+- Reuse existing components (`lib/shared/widgets/`) before creating new ones.
+- Do not create duplicate widgets for the same pattern.
+- Always use design tokens from `lib/theme/tokens/` — never use raw color values, raw font sizes, or font family names directly in widgets.
+- Spacing, radius, colors, typography, and sizing must come from centralized tokens.
+
+## Backend and Security
+
+- Supabase is the backend source of truth.
+- Never place API keys, secrets, service role keys, or privileged logic on the client side.
+- Sensitive or privileged logic must live in Supabase Edge Functions or secure backend configuration.
+- Always assume client-side code is public.
+- Respect secure Supabase practices, validation, and RLS-aware thinking.
+
+## Code Quality
+
+- Write maintainable, reusable, and testable code.
+- Keep files focused and clean.
+- Prefer composition and reuse over duplication.
+- Use clear naming and predictable structure.
+- Avoid hacks unless explicitly requested.
+
+## Performance
+
+- Avoid unnecessary rebuilds — use `const` where appropriate.
+- Avoid heavy logic inside `build` methods.
+- Reuse widgets and avoid duplicated UI trees.
+- Avoid repeated or unnecessary network/database calls.
+
+## Workflow
+
+- Read the existing code before making changes.
+- Identify reusable widgets, cubits, tokens, repositories, and services first.
+- Align with the current clean patterns in the codebase.
+- Before creating a new file, check whether an existing file should be extended.
+- Before creating a new component, check whether a reusable one already exists.
+
+## Implementation Expectation
+
+When asked to implement something:
+1. Inspect the related files first.
+2. Identify reusable code and current patterns.
+3. Propose the cleanest minimal implementation path.
+4. Implement with clean architecture, Cubit, token-based styling, and secure Supabase usage.
+5. Keep the solution maintainable, performant, and consistent.
+
+If a request conflicts with these rules, follow these rules unless explicitly told otherwise.

@@ -1,3 +1,5 @@
+import 'auth_error_codes.dart';
+
 /// Base failure class for domain-level errors.
 abstract class Failure {
   final String message;
@@ -16,7 +18,12 @@ class CacheFailure extends Failure {
 }
 
 class AuthFailure extends Failure {
-  const AuthFailure([super.message = 'Authentication error']);
+  final AuthErrorCode code;
+
+  const AuthFailure({
+    String message = 'Authentication error',
+    this.code = AuthErrorCode.unknown,
+  }) : super(message);
 }
 
 class NetworkFailure extends Failure {

@@ -10,6 +10,7 @@ abstract final class PrimitiveColors {
   static const Color neutral700 = Color(0xFF1F2A2E);
   static const Color neutral600 = Color(0xFF2D3A40);
   static const Color neutral500 = Color(0xFF4B5563);
+  static const Color neutral450 = Color(0xFF6B7280);
   static const Color neutral400 = Color(0xFF9CA3AF);
   static const Color neutral300 = Color(0xFFD1D5DB);
   static const Color neutral200 = Color(0xFFE5E7EB);
@@ -35,8 +36,10 @@ abstract final class PrimitiveColors {
   static const Color red500    = Color(0xFFEF4444);
 
   // White alpha
+  static const Color white05 = Color(0x0DFFFFFF);
   static const Color white10 = Color(0x1AFFFFFF);
   static const Color white20 = Color(0x33FFFFFF);
+  static const Color white30 = Color(0x4DFFFFFF);
   static const Color white40 = Color(0x66FFFFFF);
   static const Color white60 = Color(0x99FFFFFF);
 
@@ -44,4 +47,17 @@ abstract final class PrimitiveColors {
   static const Color black40 = Color(0x66000000);
   static const Color black60 = Color(0x99000000);
   static const Color black80 = Color(0xCC000000);
+
+  // Green accent (input valid checkmark)
+  static const Color green800 = Color(0xFF278871);
+
+  // Disabled / Muted
+  static const Color darkTeal = Color(0xFF243437);
+
+  // Input field white bg
+  static const Color white100 = Color(0xFFFFFFFF);
+
+  // Dark text on light bg
+  static const Color darkText = Color(0xFF111C1F);
+  static const Color darkTextMuted = Color(0x80111C1F); // 50% opacity
 }

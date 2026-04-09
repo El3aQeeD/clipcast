@@ -65,4 +65,34 @@ abstract final class ComponentColors {
 
   // ── Dividers ─────────────────────────────────────────────────
   static const Color divider = SemanticColors.borderDefault;
+
+  // ── Button disabled ──────────────────────────────────────────
+  static const Color buttonDisabledBg   = SemanticColors.interactiveDisabled;
+  static const Color buttonDisabledText = SemanticColors.textOnDisabled;
+
+  // ── Input (light background — sign-up fields) ────────────────
+  static const Color inputLightBg          = SemanticColors.inputLightBg;
+  static const Color inputLightText        = SemanticColors.inputLightText;
+  static const Color inputLightPlaceholder = SemanticColors.inputLightPlaceholder;
+  static const Color inputLightBorder      = PrimitiveColors.white10;
+  static const Color inputLightBorderFocused = SemanticColors.interactivePrimary;
+
+  // ── OTP ──────────────────────────────────────────────────────
+  static const Color otpFieldBg            = SemanticColors.backgroundSurface;
+  static const Color otpFieldBorder        = SemanticColors.borderDefault;
+  static const Color otpFieldBorderFocused = SemanticColors.interactivePrimary;
+  static const Color otpFieldText          = SemanticColors.textPrimary;
+
+  // ── Snackbar ─────────────────────────────────────────────────
+  static const Color snackbarErrorBg   = SemanticColors.feedbackError;
+  static const Color snackbarInfoBg    = SemanticColors.backgroundElevated;
+  static const Color snackbarText      = SemanticColors.textPrimary;
+
+  // ── Validation (input checkmarks & criteria) ─────────────────
+  static const Color inputValidCheckmark    = SemanticColors.validCheckmark;
+  static const Color criteriaMetIcon        = SemanticColors.criteriaMet;
+  static const Color criteriaMetText        = SemanticColors.criteriaMuted;
+  static const Color criteriaUnmetIcon      = SemanticColors.feedbackError;
+  static const Color criteriaInactiveIcon   = SemanticColors.criteriaMuted;
+  static const Color criteriaInactiveText   = SemanticColors.criteriaMuted;
 }
